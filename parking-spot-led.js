@@ -5,7 +5,8 @@ var board = new five.Board();
 var parkingSpot1Ref = new Firebase("https://incandescent-fire-3535.firebaseio.com/garage1/spot1");
 var parkingSpot2Ref = new Firebase("https://incandescent-fire-3535.firebaseio.com/garage1/spot2");
 var parkingSpot3Ref = new Firebase("https://incandescent-fire-3535.firebaseio.com/garage1/spot3");
-var gateRef = new Firebase("https://incandescent-fire-3535.firebaseio.com/gates/entrance");
+var entranceRef = new Firebase("https://incandescent-fire-3535.firebaseio.com/gates/entrance");
+var exitRef = new Firebase("https://incandescent-fire-3535.firebaseio.com/gates/exit");
 
 //Spot1 Sensor 
 
@@ -24,12 +25,21 @@ board.on("ready", function () {
   
 
   //Entrance gate 
-  gateRef.on("value", function(snap) {  
+  entranceRef.on("value", function(snap) {  
 	if(snap.val() == "true"){
-		gate.to(-180);
+		gate.to(-90);
 	}
 	else{
-		gate.to(180);
+		gate.to(90);
+	}
+  });
+  
+  exitRef.on("value", function(snap) {  
+	if(snap.val() == "true"){
+		gate.to(-90);
+	}
+	else{
+		gate.to(90);
 	}
   });
   
@@ -76,8 +86,23 @@ board.on("ready", function () {
     }
   });//end spot2 listener
   
+  		parkingSpot3Ref.child("status").on("value", function(snap) {
+		if(snap.val() == "vacant") { //they are parking into the spot
+		 parkingSpot1Ref.child("reserved").on("value", function(snap2) {
+			if(snap2.val() == "no"){
+				led3.on();
+			}
+			else{
+				led3.off();
+			}
+		 }); //end of reservation check 
+		} else if (snap.val() == "taken") {
+		  led3.off();
+		}
+	  });//end spot3 listener
+  
+  
   //SPOT3 WILL SHOWCASE THE PIR SENSOR WRITING TO THE DATABASE
-  led3.off();
   sensor3.on("motionstart", function(){ //if motion detected 
 	console.log("CAR HAS MOVED: ", Date.now());
 	
@@ -99,23 +124,6 @@ board.on("ready", function () {
 	  });//end spot1 listener
   
 	});
-   sensor3.on("motionend", function(){ //if motion no longer detected 
-	console.log("CAR HAS STOPPED MOVING: ", Date.now());
-		parkingSpot3Ref.child("status").on("value", function(snap) {
-		if(snap.val() == "vacant") { //they are parking into the spot
-		 parkingSpot1Ref.child("reserved").on("value", function(snap2) {
-			if(snap2.val() == "no"){
-				led1.on();
-			}
-			else{
-				led1.off();
-			}
-		 }); //end of reservation check 
-		} else if (snap.val() == "taken") {
-		  led1.off();
-		}
-	  });//end spot1 listener
-   }); 
-  
+ 
   
 });//end board.on
